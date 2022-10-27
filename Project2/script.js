@@ -23,6 +23,11 @@ var abi = [
 				"internalType": "uint32",
 				"name": "amount",
 				"type": "uint32"
+			},
+			{
+				"internalType": "uint256",
+				"name": "date",
+				"type": "uint256"
 			}
 		],
 		"name": "add_IOU",
@@ -129,7 +134,7 @@ var abi = [
 abiDecoder.addABI(abi);
 // call abiDecoder.decodeMethod to use this - see 'getAllFunctionCalls' for more
 
-var contractAddress = '0x4AE48A30A87Ca0F16392e75d880Bb87128A4ACB2'; // FIXME: fill this in with your contract's address/hash
+var contractAddress = '0x5fb6e0CFa822ad9Ef0A8bbF6420d6394Ee25939C'; // FIXME: fill this in with your contract's address/hash
 var BlockchainSplitwise = new web3.eth.Contract(abi, contractAddress);
 
 // =============================================================================
@@ -184,15 +189,28 @@ async function getTotalOwed(user) {
 // HINT: Try looking at the way 'getAllFunctionCalls' is written. You can modify it if you'd like.
 async function getLastActive(user) {
 
-	return 0;
+	const listIOUs = await BlockchainSplitwise.methods.getIOUsArray().call();
+	newDate = 0;
+	for(var i=0; i<listIOUs.length; i++){
+		if(user == listIOUs[i].debtor || user == listIOUs[i].creditor){
+			if(newDate < listIOUs[i].date){
+				newDate = listIOUs[i].date;
+			}
+		}
+	}
+
+	return newDate;
+	
 }
+
 
 // TODO: add an IOU ('I owe you') to the system
 // The person you owe money is passed as 'creditor'
 // The amount you owe them is passed as 'amount'
 async function add_IOU(creditor, amount) {
 
-	await BlockchainSplitwise.methods.add_IOU(creditor, amount).send({from:web3.eth.defaultAccount, gas : 1000000});
+	var date = Math.floor(Date.now()/1000);
+	await BlockchainSplitwise.methods.add_IOU(creditor, amount, date).send({from:web3.eth.defaultAccount, gas : 1000000});
 
 }
 
